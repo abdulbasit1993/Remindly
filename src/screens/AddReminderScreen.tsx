@@ -9,6 +9,8 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import moment from 'moment';
 import Header from '../components/Header';
 import { COLORS } from '../constants/colors';
 import { reminderPresets } from '../constants/presets';
@@ -18,14 +20,40 @@ import notifee, {
   TimestampTrigger,
   TriggerType,
 } from '@notifee/react-native';
+import { saveReminder } from '../utils/storage';
 
 const AddReminderScreen = () => {
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [reminderMode, setReminderMode] = useState('preset');
   const [selectedPreset, setSelectedPreset] = useState(null);
-  const [date, setDate] = useState();
-  const [time, setTime] = useState();
+  const [customDate, setCustomDate] = useState(new Date());
+  const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
+  const [isTimePickerVisible, setIsTimePickerVisible] = useState(false);
+
+  const showDatePicker = () => setIsDatePickerVisible(true);
+  const hideDatePicker = () => setIsDatePickerVisible(false);
+
+  const handleDateConfirm = date => {
+    const updatedDate = new Date(customDate);
+    updatedDate.setFullYear(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+    );
+    setCustomDate(updatedDate);
+    hideDatePicker();
+  };
+
+  const showTimePicker = () => setIsTimePickerVisible(true);
+  const hideTimePicker = () => setIsTimePickerVisible(false);
+
+  const handleTimeConfirm = time => {
+    const updatedDate = new Date(customDate);
+    updatedDate.setHours(time.getHours(), time.getMinutes(), 0, 0);
+    setCustomDate(updatedDate);
+    hideTimePicker();
+  };
 
   const handleSubmit = async () => {
     if (!title) {
@@ -43,7 +71,10 @@ const AddReminderScreen = () => {
       return;
     }
 
-    if (reminderMode === 'custom' && (!date || !time)) {
+    if (
+      reminderMode === 'custom' &&
+      (!customDate || isNaN(customDate.getTime()))
+    ) {
       Alert.alert('Error', 'Please select a date and time');
       return;
     }
@@ -56,6 +87,7 @@ const AddReminderScreen = () => {
       const channelId = await notifee.createChannel({
         id: 'reminders',
         name: 'Scheduled Reminders',
+        importance: AndroidImportance.HIGH,
       });
 
       let triggerTimestamp;
@@ -71,7 +103,11 @@ const AddReminderScreen = () => {
         triggerTimestamp = scheduleDate.getTime();
       } else {
         // Logic for custom date and time
-        triggerTimestamp = new Date(date).getTime();
+        triggerTimestamp = customDate.getTime();
+        if (triggerTimestamp <= Date.now()) {
+          Alert.alert('Error', 'Please select a future time');
+          return;
+        }
       }
 
       const trigger: TimestampTrigger = {
@@ -98,20 +134,30 @@ const AddReminderScreen = () => {
         trigger,
       );
 
-      const readableTime = new Date(triggerTimestamp).toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
+      // Prepare the reminder object for MMKV
+      const newReminderRecord = {
+        id: reminderId,
+        title: title,
+        message: message,
+        timestamp: triggerTimestamp,
+        mode: reminderMode,
+        createdAt: new Date().toISOString(),
+      };
 
-      Alert.alert('Success', `Reminder scheduled for ${readableTime}`);
+      // Save to internal storage
+      saveReminder(newReminderRecord);
+
+      Alert.alert(
+        'Success',
+        `Reminder scheduled for ${moment(triggerTimestamp).format('LT')}`,
+      );
 
       // Reset form fields
       setTitle('');
       setMessage('');
       setReminderMode('preset');
       setSelectedPreset(null);
-      setDate(null);
-      setTime(null);
+      setCustomDate(new Date());
     } catch (error) {
       console.error('Notification Error: ', error);
       Alert.alert('Error', 'Failed to schedule reminder');
@@ -219,7 +265,40 @@ const AddReminderScreen = () => {
                 ))}
               </View>
             ) : reminderMode === 'custom' ? (
-              <View></View>
+              <View style={styles.customContainer}>
+                <TouchableOpacity
+                  style={styles.dateTimeSelector}
+                  onPress={showDatePicker}
+                >
+                  <Text style={styles.dateTimeLabel}>
+                    Date: {moment(customDate).format('LL')}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.dateTimeSelector}
+                  onPress={showTimePicker}
+                >
+                  <Text style={styles.dateTimeLabel}>
+                    Time: {moment(customDate).format('LT')}
+                  </Text>
+                </TouchableOpacity>
+
+                <DateTimePickerModal
+                  isVisible={isDatePickerVisible}
+                  mode="date"
+                  onConfirm={handleDateConfirm}
+                  onCancel={hideDatePicker}
+                  minimumDate={new Date()}
+                />
+
+                <DateTimePickerModal
+                  isVisible={isTimePickerVisible}
+                  mode="time"
+                  onConfirm={handleTimeConfirm}
+                  onCancel={hideTimePicker}
+                />
+              </View>
             ) : null}
           </View>
 
@@ -325,6 +404,23 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontWeight: '600',
     fontSize: 14,
+  },
+  customContainer: {
+    marginTop: 20,
+    gap: 10,
+  },
+  dateTimeSelector: {
+    padding: 15,
+    borderWidth: 1,
+    borderColor: COLORS.black,
+    borderRadius: 8,
+    backgroundColor: '#F9F9F9',
+    marginBottom: 10,
+  },
+  dateTimeLabel: {
+    fontSize: 16,
+    color: COLORS.black,
+    fontWeight: '500',
   },
 });
 
