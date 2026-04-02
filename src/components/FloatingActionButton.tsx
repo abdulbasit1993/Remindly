@@ -13,7 +13,7 @@ const FloatingActionButton = ({ onPress }) => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 60,
     right: 20,
     width: 60,
     height: 60,
