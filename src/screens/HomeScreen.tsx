@@ -7,6 +7,7 @@ import {
   FlatList,
   TouchableOpacity,
   Animated,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -19,7 +20,8 @@ import FloatingActionButton from '../components/FloatingActionButton';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS } from '../constants/colors';
 import { useMMKVString } from 'react-native-mmkv';
-import { storage } from '../utils/storage';
+import { deleteReminder, storage } from '../utils/storage';
+import notifee from '@notifee/react-native';
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -30,9 +32,52 @@ const HomeScreen = () => {
     return remindersJSON ? JSON.parse(remindersJSON) : [];
   }, [remindersJSON]);
 
-  const deleteReminder = (id: string) => {};
+  const cancelScheduledReminder = async (id: string): Promise<boolean> => {
+    try {
+      await notifee.cancelTriggerNotification(id);
 
-  const updateReminder = (id: string) => {};
+      await notifee.cancelDisplayedNotification(id);
+
+      console.log(`Notification ${id} cancelled successfully`);
+      return true;
+    } catch (error) {
+      console.error('Error cancelling notification: ', error);
+      return false;
+    }
+  };
+
+  const handleDeleteReminder = async (id: string) => {
+    const deleted = deleteReminder(id);
+    if (deleted) {
+      await cancelScheduledReminder(id);
+
+      Alert.alert('Success', 'Reminder deleted successfully');
+    } else {
+      Alert.alert('Error', 'Failed to delete reminder');
+    }
+  };
+
+  const onDeletePress = (id: string) => {
+    Alert.alert(
+      'Delete Reminder',
+      'Are you sure you want to delete this reminder?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: () => handleDeleteReminder(id),
+          style: 'destructive',
+        },
+      ],
+    );
+  };
+
+  const onUpdatePress = (item: unknown) => {
+    navigation.navigate('UpdateReminder', { data: item });
+  };
 
   const renderRightActions = (
     progress: Animated.AnimatedInterpolation<number>,
@@ -47,14 +92,14 @@ const HomeScreen = () => {
     return (
       <View style={styles.swipedRow}>
         <TouchableOpacity
-          onPress={() => updateReminder(item.id)}
+          onPress={() => onUpdatePress(item)}
           style={[styles.actionButton, styles.updateButton]}
         >
           <Text style={styles.actionText}>Update</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => deleteReminder(item.id)}
+          onPress={() => onDeletePress(item.id)}
           style={[styles.actionButton, styles.deleteButton]}
         >
           <Text style={styles.actionText}>Delete</Text>

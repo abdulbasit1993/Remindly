@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -19,11 +19,13 @@ import notifee, {
   AndroidVisibility,
   TimestampTrigger,
   TriggerType,
+  AuthorizationStatus,
 } from '@notifee/react-native';
-import { saveReminder } from '../utils/storage';
+import { saveReminder, updateReminderById } from '../utils/storage';
 import { REMINDER_CHANNEL_ID } from '../constants/config';
 
-const AddReminderScreen = ({ navigation }) => {
+const UpdateReminderScreen = ({ route, navigation }) => {
+  const { data } = route.params;
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [reminderMode, setReminderMode] = useState('preset');
@@ -34,6 +36,8 @@ const AddReminderScreen = ({ navigation }) => {
 
   const showDatePicker = () => setIsDatePickerVisible(true);
   const hideDatePicker = () => setIsDatePickerVisible(false);
+
+  console.log('data (UpdateReminderScreen) ===>> ', data);
 
   const handleDateConfirm = date => {
     const updatedDate = new Date(customDate);
@@ -57,33 +61,49 @@ const AddReminderScreen = ({ navigation }) => {
   };
 
   const handleSubmit = async () => {
-    if (!title) {
-      Alert.alert('Error', 'Please enter a title');
-      return;
-    }
-
-    if (!message) {
-      Alert.alert('Error', 'Please enter a message');
-      return;
-    }
-
-    if (reminderMode === 'preset' && !selectedPreset) {
-      Alert.alert('Error', 'Please select a preset');
-      return;
-    }
-
-    if (
-      reminderMode === 'custom' &&
-      (!customDate || isNaN(customDate.getTime()))
-    ) {
-      Alert.alert('Error', 'Please select a date and time');
-      return;
-    }
-
-    // Handle reminder scheduling
-
     try {
-      await notifee.requestPermission();
+      if (!title) {
+        Alert.alert('Error', 'Please enter a title');
+        return;
+      }
+
+      if (!message) {
+        Alert.alert('Error', 'Please enter a message');
+        return;
+      }
+
+      if (reminderMode === 'preset' && !selectedPreset) {
+        Alert.alert('Error', 'Please select a preset');
+        return;
+      }
+
+      if (
+        reminderMode === 'custom' &&
+        (!customDate || isNaN(customDate.getTime()))
+      ) {
+        Alert.alert('Error', 'Please select a valid date/time');
+        return;
+      }
+
+      // await notifee.requestPermission();
+      const settings = await notifee.getNotificationSettings();
+
+      if (settings.authorizationStatus < AuthorizationStatus.AUTHORIZED) {
+        Alert.alert(
+          'Permission Required',
+          'Please enable notifications from settings to use reminders.',
+          [
+            { text: 'Cancel' },
+            {
+              text: 'Go to Settings',
+              onPress: () => {
+                notifee.openNotificationSettings();
+              },
+            },
+          ],
+        );
+        return;
+      }
 
       let triggerTimestamp;
 
@@ -92,29 +112,30 @@ const AddReminderScreen = ({ navigation }) => {
         const futureTime = now.getTime() + selectedPreset * 60000;
 
         const scheduleDate = new Date(futureTime);
-
         scheduleDate.setSeconds(0, 0);
 
         triggerTimestamp = scheduleDate.getTime();
       } else {
-        // Logic for custom date and time
         triggerTimestamp = customDate.getTime();
+
         if (triggerTimestamp <= Date.now()) {
           Alert.alert('Error', 'Please select a future time');
           return;
         }
       }
 
+      // Cancel the old notification
+      await notifee.cancelTriggerNotification(data.id);
+
       const trigger: TimestampTrigger = {
         type: TriggerType.TIMESTAMP,
         timestamp: triggerTimestamp,
       };
 
-      const reminderId = `rem-${Date.now().toString()}`;
-
+      // Recreate notification with the same ID
       await notifee.createTriggerNotification(
         {
-          id: reminderId,
+          id: data.id,
           title: title,
           body: message,
           android: {
@@ -129,42 +150,49 @@ const AddReminderScreen = ({ navigation }) => {
         trigger,
       );
 
-      // Prepare the reminder object for MMKV
-      const newReminderRecord = {
-        id: reminderId,
-        title: title,
-        message: message,
+      // Update storage
+      const updatedReminder = {
+        title,
+        message,
         timestamp: triggerTimestamp,
         mode: reminderMode,
-        preset: reminderMode === 'preset' ? selectedPreset : null,
-        createdAt: new Date().toISOString(),
+        preset: selectedPreset,
+        updatedAt: new Date().toISOString(),
       };
 
-      // Save to internal storage
-      saveReminder(newReminderRecord);
+      updateReminderById(data.id, updatedReminder);
 
       Alert.alert(
         'Success',
-        `Reminder scheduled for ${moment(triggerTimestamp).format('LT')}`,
+        `Reminder updated for ${moment(triggerTimestamp).format('LT')}`,
       );
 
-      // Reset form fields
-      setTitle('');
-      setMessage('');
-      setReminderMode('preset');
-      setSelectedPreset(null);
-      setCustomDate(new Date());
-
-      navigation.navigate('Home');
+      navigation.goBack();
     } catch (error) {
-      console.error('Notification Error: ', error);
-      Alert.alert('Error', 'Failed to schedule reminder');
+      console.error('Update error: ', error);
+      Alert.alert('Error', 'Failed to update reminder');
     }
   };
 
+  useEffect(() => {
+    if (data) {
+      setTitle(data.title);
+      setMessage(data.message);
+      setReminderMode(data.mode);
+
+      if (data.mode === 'custom' && data.timestamp) {
+        setCustomDate(new Date(data.timestamp));
+      }
+
+      if (data.mode === 'preset' && data.preset) {
+        setSelectedPreset(data.preset);
+      }
+    }
+  }, []);
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <Header title="Add Reminder" />
+      <Header title="Update Reminder" />
 
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.subContainer}>
@@ -422,4 +450,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddReminderScreen;
+export default UpdateReminderScreen;
