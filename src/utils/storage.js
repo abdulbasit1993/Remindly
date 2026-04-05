@@ -2,6 +2,8 @@ import { createMMKV } from 'react-native-mmkv';
 
 export const storage = createMMKV();
 
+const THEME_KEY = 'app_theme';
+
 export const getReminders = () => {
   try {
     const data = storage.getString('user_reminders');
@@ -49,5 +51,22 @@ export const updateReminderById = (id, updatedData) => {
   } catch (e) {
     console.error('Error updating reminder: ', e);
     return false;
+  }
+};
+
+export const getAppTheme = () => {
+  try {
+    return storage.getString(THEME_KEY) || 'system';
+  } catch (e) {
+    console.error('Error getting theme: ', e);
+    return 'system';
+  }
+};
+
+export const setAppTheme = theme => {
+  try {
+    storage.set(THEME_KEY, theme);
+  } catch (e) {
+    console.error('Error setting theme: ', e);
   }
 };

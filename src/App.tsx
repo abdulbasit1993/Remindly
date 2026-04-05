@@ -4,11 +4,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from './screens/HomeScreen';
 import AddReminderScreen from './screens/AddReminderScreen';
 import UpdateReminderScreen from './screens/UpdateReminderScreen';
+import SettingsScreen from './screens/SettingsScreen';
 import notifee, {
   AndroidImportance,
   AuthorizationStatus,
 } from '@notifee/react-native';
 import { REMINDER_CHANNEL_ID, REMINDER_CHANNEL_NAME } from './constants/config';
+import { ThemeProvider } from './context/ThemeContext';
 
 const App = () => {
   const Stack = createNativeStackNavigator();
@@ -42,16 +44,22 @@ const App = () => {
   }, []);
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="Home"
-        screenOptions={{ headerShown: false }}
-      >
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="AddReminder" component={AddReminderScreen} />
-        <Stack.Screen name="UpdateReminder" component={UpdateReminderScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <ThemeProvider>
+      <NavigationContainer>
+        <Stack.Navigator
+          initialRouteName="Home"
+          screenOptions={{ headerShown: false }}
+        >
+          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="AddReminder" component={AddReminderScreen} />
+          <Stack.Screen
+            name="UpdateReminder"
+            component={UpdateReminderScreen}
+          />
+          <Stack.Screen name="Settings" component={SettingsScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </ThemeProvider>
   );
 };
 

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS } from '../constants/colors';
 import IonIcons from '@react-native-vector-icons/ionicons';
 import { useNavigation } from '@react-navigation/native';
+import GearIcon from '../assets/icons/gear.svg';
 
 const Header = ({ title, isHome }) => {
   const navigation = useNavigation();
@@ -22,7 +23,17 @@ const Header = ({ title, isHome }) => {
       <View style={styles.center}>
         <Text style={styles.text}>{title}</Text>
       </View>
-      <View style={styles.right}></View>
+      <View style={styles.right}>
+        {isHome ? (
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate('Settings');
+            }}
+          >
+            <GearIcon width={30} height={30} />
+          </TouchableOpacity>
+        ) : null}
+      </View>
     </View>
   );
 };
