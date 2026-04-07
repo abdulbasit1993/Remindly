@@ -19,11 +19,14 @@ const SettingsScreen = () => {
   ]);
 
   return (
-    <SafeAreaView
-      style={[styles.safeArea, { backgroundColor: colors.background }]}
-    >
+    <SafeAreaView style={[styles.safeArea]}>
       <Header title="Settings" />
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.container,
+          { backgroundColor: colors.backgroundColor },
+        ]}
+      >
         <Text style={[styles.label, { color: colors.text }]}>App Theme</Text>
 
         <View style={{ zIndex: 1000 }}>
@@ -38,11 +41,22 @@ const SettingsScreen = () => {
             }}
             setItems={setItems}
             placeholder="Select Theme"
-            style={[styles.dropdown, { borderColor: colors.border }]}
+            style={[
+              styles.dropdown,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
             dropDownContainerStyle={[
               styles.dropdownContainer,
-              { borderColor: colors.border },
+              { backgroundColor: colors.card, borderColor: colors.border },
             ]}
+            labelStyle={{ color: colors.text }}
+            placeholderStyle={{ color: colors.text }}
+            listItemLabelStyle={{ color: colors.text }}
+            tickIconStyle={{ tintColor: colors.text }}
+            arrowIconStyle={{
+              tintColor: colors.text,
+            }}
+            // arrowIconContainerStyle={{ color: colors.text }}
           />
         </View>
       </ScrollView>
@@ -54,7 +68,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 15,
-    backgroundColor: COLORS.white,
   },
   safeArea: {
     flex: 1,
@@ -64,10 +77,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   dropdown: {
-    borderColor: '#ccc',
+    borderWidth: 1,
   },
   dropdownContainer: {
-    borderColor: '#ccc',
+    borderWidth: 1,
   },
 });
 

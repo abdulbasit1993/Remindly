@@ -23,8 +23,11 @@ import notifee, {
 } from '@notifee/react-native';
 import { saveReminder, updateReminderById } from '../utils/storage';
 import { REMINDER_CHANNEL_ID } from '../constants/config';
+import { useTheme } from '../context/ThemeContext';
 
 const UpdateReminderScreen = ({ route, navigation }) => {
+  const { colors } = useTheme();
+
   const { data } = route.params;
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
@@ -36,8 +39,6 @@ const UpdateReminderScreen = ({ route, navigation }) => {
 
   const showDatePicker = () => setIsDatePickerVisible(true);
   const hideDatePicker = () => setIsDatePickerVisible(false);
-
-  console.log('data (UpdateReminderScreen) ===>> ', data);
 
   const handleDateConfirm = date => {
     const updatedDate = new Date(customDate);
@@ -191,41 +192,49 @@ const UpdateReminderScreen = ({ route, navigation }) => {
   }, []);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: colors.backgroundColor }]}
+    >
       <Header title="Update Reminder" />
 
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.subContainer}>
           <View>
-            <Text style={styles.label}>Reminder Title:</Text>
+            <Text style={[styles.label, { color: colors.text }]}>
+              Reminder Title:
+            </Text>
 
-            <View style={styles.inputContainer}>
+            <View style={[styles.inputContainer, { borderColor: colors.text }]}>
               <TextInput
                 value={title}
                 onChangeText={text => setTitle(text)}
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 placeholder="Enter Reminder Title"
               />
             </View>
           </View>
 
           <View>
-            <Text style={styles.label}>Reminder Message:</Text>
+            <Text style={[styles.label, { color: colors.text }]}>
+              Reminder Message:
+            </Text>
 
-            <View style={styles.inputContainer}>
+            <View style={[styles.inputContainer, { borderColor: colors.text }]}>
               <TextInput
                 value={message}
                 onChangeText={text => setMessage(text)}
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 placeholder="Enter Reminder Message"
               />
             </View>
           </View>
 
           <View>
-            <Text style={styles.label}>Reminder Mode:</Text>
+            <Text style={[styles.label, { color: colors.text }]}>
+              Reminder Mode:
+            </Text>
 
-            <View style={styles.row}>
+            <View style={[styles.row, { borderColor: colors.text }]}>
               <TouchableOpacity
                 onPress={() => setReminderMode('preset')}
                 style={[
@@ -238,6 +247,7 @@ const UpdateReminderScreen = ({ route, navigation }) => {
                 <Text
                   style={[
                     styles.modeBtnText,
+                    { color: colors.text },
                     reminderMode === 'preset' && { color: COLORS.white },
                   ]}
                 >
@@ -257,6 +267,7 @@ const UpdateReminderScreen = ({ route, navigation }) => {
                 <Text
                   style={[
                     styles.modeBtnText,
+                    { color: colors.text },
                     reminderMode === 'custom' && { color: COLORS.white },
                   ]}
                 >
@@ -275,12 +286,17 @@ const UpdateReminderScreen = ({ route, navigation }) => {
                     key={preset.value}
                     style={[
                       styles.presetBtn,
+                      {
+                        backgroundColor: 'transparent',
+                        borderColor: colors.text,
+                      },
                       selectedPreset === preset.value && styles.selectedPreset,
                     ]}
                   >
                     <Text
                       style={[
                         styles.presetBtnText,
+                        { color: colors.text },
                         selectedPreset === preset.value &&
                           styles.selectedPresetText,
                       ]}
@@ -293,19 +309,31 @@ const UpdateReminderScreen = ({ route, navigation }) => {
             ) : reminderMode === 'custom' ? (
               <View style={styles.customContainer}>
                 <TouchableOpacity
-                  style={styles.dateTimeSelector}
+                  style={[
+                    styles.dateTimeSelector,
+                    {
+                      backgroundColor: 'transparent',
+                      borderColor: colors.text,
+                    },
+                  ]}
                   onPress={showDatePicker}
                 >
-                  <Text style={styles.dateTimeLabel}>
+                  <Text style={[styles.dateTimeLabel, { color: colors.text }]}>
                     Date: {moment(customDate).format('LL')}
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.dateTimeSelector}
+                  style={[
+                    styles.dateTimeSelector,
+                    {
+                      backgroundColor: 'transparent',
+                      borderColor: colors.text,
+                    },
+                  ]}
                   onPress={showTimePicker}
                 >
-                  <Text style={styles.dateTimeLabel}>
+                  <Text style={[styles.dateTimeLabel, { color: colors.text }]}>
                     Time: {moment(customDate).format('LT')}
                   </Text>
                 </TouchableOpacity>
@@ -347,7 +375,6 @@ const UpdateReminderScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
   },
   safeArea: {
     flex: 1,
@@ -363,7 +390,6 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     borderWidth: 1,
-    borderColor: COLORS.black,
     borderRadius: 5,
     padding: 10,
     marginVertical: 10,
@@ -387,7 +413,6 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     borderWidth: 1,
-    borderColor: COLORS.black,
     width: '70%',
     marginTop: 10,
   },
@@ -399,7 +424,6 @@ const styles = StyleSheet.create({
   modeBtnText: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: COLORS.black,
   },
   presetsGrid: {
     flexDirection: 'row',
@@ -411,12 +435,14 @@ const styles = StyleSheet.create({
     width: '30%',
     paddingVertical: 15,
     borderWidth: 1,
-    borderColor: COLORS.primary,
     borderRadius: 8,
     marginBottom: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.white,
+  },
+  presetBtnText: {
+    fontWeight: '600',
+    fontSize: 14,
   },
   selectedPreset: {
     backgroundColor: COLORS.primary,
@@ -438,14 +464,11 @@ const styles = StyleSheet.create({
   dateTimeSelector: {
     padding: 15,
     borderWidth: 1,
-    borderColor: COLORS.black,
     borderRadius: 8,
-    backgroundColor: '#F9F9F9',
     marginBottom: 10,
   },
   dateTimeLabel: {
     fontSize: 16,
-    color: COLORS.black,
     fontWeight: '500',
   },
 });

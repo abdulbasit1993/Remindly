@@ -3,7 +3,7 @@ import { COLORS } from '../constants/colors';
 export const THEMES = {
   light: {
     backgroundColor: '#FFFFFF',
-    card: '#F5F5F5',
+    card: '#f7f7f7',
     text: '#000000',
     border: '#E0E0E0',
     primary: COLORS.primary,

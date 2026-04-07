@@ -22,9 +22,12 @@ import { COLORS } from '../constants/colors';
 import { useMMKVString } from 'react-native-mmkv';
 import { deleteReminder, storage } from '../utils/storage';
 import notifee from '@notifee/react-native';
+import { useTheme } from '../context/ThemeContext';
 
 const HomeScreen = () => {
   const navigation = useNavigation();
+
+  const { colors, theme } = useTheme();
 
   const [remindersJSON] = useMMKVString('user_reminders', storage);
 
@@ -116,9 +119,18 @@ const HomeScreen = () => {
       friction={2}
       rightThreshold={40}
     >
-      <View style={styles.reminderCard}>
-        <Text style={styles.reminderTitle}>{item?.title}</Text>
-        <Text style={styles.reminderMessage}>{item?.message}</Text>
+      <View style={[styles.reminderCard, { backgroundColor: colors.card }]}>
+        <Text style={[styles.reminderTitle, { color: colors.text }]}>
+          {item?.title}
+        </Text>
+        <Text
+          style={[
+            styles.reminderMessage,
+            { color: theme === 'dark' ? '#d0cfcf' : '#000000' },
+          ]}
+        >
+          {item?.message}
+        </Text>
         <Text style={styles.reminderTime}>
           {new Date(item?.timestamp).toLocaleString()}
         </Text>
@@ -128,7 +140,9 @@ const HomeScreen = () => {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: colors.backgroundColor }]}
+      >
         <Header title="Home" isHome />
 
         <FlatList
@@ -165,15 +179,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   reminderCard: {
-    backgroundColor: COLORS.white,
     padding: 15,
     borderRadius: 10,
     marginBottom: 15,
     borderLeftWidth: 5,
     borderLeftColor: COLORS.primary,
-    elevation: 2, // Android shadow
+    elevation: 10, // Android shadow
     shadowColor: '#000', // iOS shadow
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
   },
   swipedRow: {
@@ -200,7 +213,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
-  reminderTitle: { fontSize: 18, fontWeight: 'bold', color: COLORS.black },
+  reminderTitle: { fontSize: 18, fontWeight: 'bold' },
   reminderMessage: { fontSize: 14, color: '#666', marginTop: 5 },
   reminderTime: {
     fontSize: 12,
